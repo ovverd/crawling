@@ -26,7 +26,7 @@ import requests
 import time
 import pandas as pd
 ```
-<br><br>
+<br>
 
 
 + json : 네이버에서 크롤링한 데이터가 [[1,2,3],[3,5,4]] 이런식으로 리스트의 리스트 형태이긴 하지만 str문자열로 들어오기 때문에 json.loads를 사용하여 다시 리스트로 변환하여 저장하기 위해 사용
@@ -48,7 +48,7 @@ def make_code(x):
 <br>
 종목 코드를 받아올 때 005380 같은 것을 숫자로 인식해서 5380 같이 되지 않기 위해 문자열로 변환하여 시리즈에 apply() 시키기 위한 함수  
 
-<br><br><br><br>
+<br><br><br>
 
 
 ```python
@@ -91,11 +91,8 @@ def make_price_dataframe(code, startTime, endTime, name = '기업이름',  timef
 
 ```
 
-
+<br>
 requests 모듈로 네이버 금융에 요청 후 받은 데이터를 정제해서 데이터프레임 만드는 함수 ( 한번에 하나의 종목 )
-
-
-
 <br>
 
 ## 2.3 종목 데이터 가져오기
