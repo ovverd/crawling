@@ -108,7 +108,8 @@ code_data['단축코드'] = code_data['단축코드'].apply(make_code)      # �
 <br>
 
 
-http://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020201
+[한국거래소](http://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020201)
+
 
 한국거래소 KRX 정보데이터시스템에서 엑셀파일로 종목코드를 받을 수 있습니다.
 
