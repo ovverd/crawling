@@ -31,7 +31,13 @@ def make_price_dataframe(code, startTime, endTime, name = '기업이름',  timef
     volume_list = []
     
     for row in text_data[1:-1]:
-        row = row[:-1]   
+        
+        # 데이터형식이 다른 것들이 포함되어있어서 추가
+        if row[-4] == ',':
+            row = row[:-4] + (']')
+        else:
+            row = row[:-1]
+            
         changed_to_list = json.loads(row)
         
         date_list.append(changed_to_list[0])
