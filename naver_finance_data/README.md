@@ -73,7 +73,12 @@ def make_price_dataframe(code, startTime, endTime, name = '기업이름',  timef
     volume_list = []
     
     for row in text_data[1:-1]:           # 맨 앞과 맨 뒤 더미데이터 제거하고 시작
-        row = row[:-1]                    # 스플릿을 했을 때 맨 뒤에 ','가 붙어있는 것을 제거하고 시작
+    
+        if row[-4] == ',':                    # 데이터들이 두가지형식으로 되어있어서 알맞게 정제
+            row = row[:-4] + (']')
+        else:
+            row = row[:-1]                    # 스플릿을 했을 때 맨 뒤에 ','가 붙어있는 것을 제거하고 시작
+        
         changed_to_list = json.loads(row)
         
         date_list.append(changed_to_list[0])
