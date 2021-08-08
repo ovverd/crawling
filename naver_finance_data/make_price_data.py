@@ -75,6 +75,9 @@ for num, code, name in zip(range(1, 10), code_data['단축코드'][:10], code_da
         except requests.exceptions.Timeout:
             time.sleep(60)
             price_df = make_price_dataframe(code, name, '20210803','20210803', name = name)
+        except ConnectionResetError:
+            time.sleep(60)
+            price_df = make_price_dataframe(code, name, '19900101','20210807', name = name)
         
         if num == 1:
             total_price = price_df
