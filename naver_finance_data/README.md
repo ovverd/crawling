@@ -2,15 +2,15 @@
 
 ```
 
-make_price_dataframe(code, startTime, endTime, name = '기업이름', timeframe = 'day')
+get_price_data(path, startDate, endDate, timeframe, number = 0 ):
 
 ```
 
-+ code : 기업 종목 코드
++ path : 종목코드 엑셀파일 경로
 + startTime : 가져오고 싶은 주가데이터의 시작 날짜   ex) 20210803
 + endTime : 가져오고 싶은 주가데이터의 마지막 날짜
-+ name : 안넣어도 됨
 + timeframe : 일별 (day), 주별(week), 월별 (month)
++ number : 앞에 몇개 종목수 만 가져오고 싶을 때 / 전종목은 안넣으면 됨 
 
 
 
@@ -100,70 +100,92 @@ def make_price_dataframe(code, startTime, endTime, name = '기업이름',  timef
 requests 모듈로 네이버 금융에 요청 후 받은 데이터를 정제해서 데이터프레임 만드는 함수 ( 한번에 하나의 종목 )
 <br>
 
-## 2.3 종목 데이터 가져오기
+
+<br><br>
+
 
 ```python
-path = r'/Users/종목데이터 있는 파일 경로.xlsx'
 
-code_data = pd.read_excel(path)
-code_data = code_data[['단축코드','한글 종목명']]                   # 종목코드와 종목명만 남김
-code_data['단축코드'] = code_data['단축코드'].apply(make_code)      # 단축코드 시리즈를 문자열 타입으로 변환
+def get_price_data(path, startDate,endDate,timeframe, number = 0):
+
+    
+    code_data = pd.read_excel(path)
+    code_data = code_data[['단축코드','한글 종목명']]                    # 종목코드와 종목명만 남김
+    code_data['단축코드'] = code_data['단축코드'].apply(make_code)      # 단축코드 시리즈를 문자열 타입으로 변환
+
+    if number == 0:
+        number = len(code_data)
+        
+    for num, code, name in zip(range(1, number+1), code_data['단축코드'][:number+1], code_data['한글 종목명'][:number+1]):
+
+        try:
+            print(num, code, name)
+            time.sleep(1)
+            try:
+                price_df = make_price_dataframe(code, startDate, endDate, name = name, timeframe = timeframe)
+            
+            # 커넥션 예외처리, 에러 시 종료하지않고 60초 후 재시도 
+            except requests.exceptions.Timeout:
+                time.sleep(60)
+                price_df = make_price_dataframe(code, startDate, endDate, name = name, timeframe = timeframe)
+            except ConnectionResetError:
+                time.sleep(60)
+                price_df = make_price_dataframe(code, startDate, endDate, name = name, timeframe = timeframe)
+            
+            if num == 1:
+                total_price = price_df
+                
+            else:
+                total_price = pd.merge(total_price, price_df,how='outer', right_index=True, left_index=True)
+        except ValueError:
+            print( code, 'valueError')
+            continue
+        except KeyError:
+            print( code, 'KeyError')
+            continue
+
+    total_price.index = pd.to_datetime(total_price.index)
+    
+    return total_price
 
 ```
+
+
 <br>
+
+ 모든 요청 종목 데이터를 취합하여 데이터프레임으로 만드는 함수
+ 
+<br>
+
+
+
+
+## 2.3 실행하기
+
+```python
+
+path = r'/Users/종목데이터 있는 파일 경로.xlsx'
+
+# number = 4 => 앞에 4개종목 가져옴
+
+price_result = get_price_data(path, '20210805','20210807', timeframe='day', number = 4)
+
+price_result.to_excel(r'/Users/jinyounglee/Documents/price_result_exxxxx.xlsx')
+
+```
+
+<br>
+
 
 <a href="http://data.krx.co.kr/contents/MDC/MDI/mdiLoader/index.cmd?menuId=MDC0201020201" target="_blank">
 
 
 한국거래소 KRX 정보데이터시스템에서 엑셀파일로 종목코드를 받을 수 있습니다.
+    
++ 전종목, 모든날짜(1990년부터), 일자별 데이터를 엑셀로 저장할 때까지 기다리려면 3~4시간 이상 걸립니다.    
 
-
-
-<br>
-
-## 2.4 전 종목 데이터 크롤링
-
-```python
-
-# 전 종목 데이터를 크롤링하려면 zip ( range(1,len(code_data), code_data['단축코드'], code_data['한글 종목명'] ) 으로 바꾸면 됨, 밑에는 실험으로 하기 좋게 10개만 함.
-
-for num, code, name in zip(range(1, 10), code_data['단축코드'][:10], code_data['한글 종목명'][:10]):
-
-    try:
-        print(num, code, name)
-        time.sleep(1)                 # 1초에 1번만 요청하기
-        try:
-            price_df = make_price_dataframe(code, '20210803','20210803', name = name)     # 원하는 시작날짜~종료날짜 입력해서 요청
-        except requests.exceptions.Timeout:
-            time.sleep(60)
-            price_df = make_price_dataframe(code, name, '20210803','20210803', name = name)   # 요청이 오류가 났을 때 누락없게하기위해 60초후 재요청
-        
-        if num == 1:                  # 맨처음엔 total_price 데이터프레임 선언하기
-            total_price = price_df
-            
-        else:
-            total_price = pd.merge(total_price, price_df,how='outer', right_index=True, left_index=True)  # 그다음부터 전부다 종목별로 '오른쪽으로' merge 하기
-    except ValueError:
-        continue
-    except KeyError:
-        continue
-        
-```
-<br>
-
-
-## 2.5 데이터 엑셀로 저장하기
-
-```python
-
-total_price.index = pd.to_datetime(total_price.index)       # str로 되어있던 날짜들을 진짜 datetime 타입으로 변환하여 저장.
-total_price.to_excel(r'/Users/저장할 경로/total_price.xlsx')
-
-
-```
-
-
-<br><br>
+<br><br><br>
+    
 ---
 
 
